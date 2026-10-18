@@ -1,0 +1,12 @@
+[toolchain]
+anchor_version = "0.30.1"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.mainnet]
+app = "925M4ZRm2VTD5ru6nL4h6h6Ls629GJoV3rQmvGsqmZo1"
+
+[programs.devnet]
+app = "925M4ZRm2VTD5ru6nL4h6h6Ls629GJoV3rQmvGsqmZo1"

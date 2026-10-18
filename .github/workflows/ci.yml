@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run fixture tests
+        run: node test/run.mjs
+
+  dogfood:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      # Runs the action against its own agree fixture: the documented usage,
+      # exercised on every push.
+      - uses: ./
+        with:
+          program: app
+          cluster: mainnet
+          anchor-toml: testdata/agree/Anchor.toml
+          lib-rs: testdata/agree/programs/app/src/lib.rs
+          idl: testdata/agree/target/idl/app.json
+          keypair: testdata/agree/target/deploy/app-keypair.json
+      # And against the drift fixture, where it must fail (we assert failure).
+      - name: Drift fixture must fail
+        id: drift
+        continue-on-error: true
+        uses: ./
+        with:
+          program: app
+          cluster: mainnet
+          anchor-toml: testdata/drift/Anchor.toml
+          lib-rs: testdata/drift/programs/app/src/lib.rs
+          idl: testdata/drift/target/idl/app.json
+      - name: Assert drift was detected
+        run: |
+          if [ "${{ steps.drift.outcome }}" != "failure" ]; then
+            echo "Expected the drift fixture to fail the step, but it did not." >&2
+            exit 1
+          fi

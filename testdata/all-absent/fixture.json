@@ -1,0 +1,4 @@
+{
+  "expect": { "exit": 1 },
+  "inputs": { "program": "app", "cluster": "mainnet" }
+}

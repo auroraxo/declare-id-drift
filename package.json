@@ -1,0 +1,19 @@
+{
+  "name": "declare-id-drift",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GitHub Action: cross-check that declare_id!, Anchor.toml, the committed IDL address, and the deployed keypair all agree on the program ID. No RPC.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node test/run.mjs"
+  },
+  "files": [
+    "src",
+    "action.yml",
+    "README.md",
+    "LICENSE"
+  ]
+}

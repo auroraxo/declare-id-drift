@@ -1,0 +1,43 @@
+name: 'Declare-ID Drift Check'
+description: 'Cross-check that declare_id!, Anchor.toml, the committed IDL address, and the deployed keypair all agree on the program ID. No RPC.'
+author: 'auroraxo'
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  program:
+    description: 'Anchor program name. Matches the [programs.<cluster>] key in Anchor.toml, the crate name in declare_id!, the IDL file stem in target/idl, and the keypair file stem in target/deploy.'
+    required: true
+  cluster:
+    description: 'Which [programs.<cluster>] entry of Anchor.toml to compare against.'
+    required: false
+    default: 'mainnet'
+  anchor-toml:
+    description: 'Path to Anchor.toml.'
+    required: false
+    default: 'Anchor.toml'
+  lib-rs:
+    description: 'Path to the program''s lib.rs containing declare_id!.'
+    required: false
+    default: ''
+  idl:
+    description: 'Path to the committed IDL JSON.'
+    required: false
+    default: ''
+  keypair:
+    description: 'Path to the deployed program keypair JSON. Optional, used as ground truth when present.'
+    required: false
+    default: ''
+  fail-on-drift:
+    description: 'Fail the step when legs disagree (true/false).'
+    required: false
+    default: 'true'
+  fail-on-missing:
+    description: 'Fail the step when one or more legs are absent (true/false).'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'node20'
+  main: 'src/index.mjs'

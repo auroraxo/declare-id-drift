@@ -1,0 +1,11 @@
+{
+  "address": "925M4ZRm2VTD5ru6nL4h6h6Ls629GJoV3rQmvGsqmZo1",
+  "metadata": { "name": "app", "version": "0.1.0", "spec": "0.1.0" },
+  "instructions": [
+    { "name": "hi", "accounts": [], "args": [] }
+  ],
+  "accounts": [],
+  "types": [],
+  "events": [],
+  "errors": []
+}

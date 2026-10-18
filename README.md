@@ -43,9 +43,29 @@ review time instead of at deploy time.
 ## Why no on-chain leg
 
 An on-chain leg would need RPC and a `Buffer` / program account lookup. The
-senzenn/idl-drift Action already does that for the IDL account specifically.
-This Action stays purely file-based so it can run in any CI with no
-credentials.
+companion Action [`auroraxo/idl-drift`](https://github.com/auroraxo/idl-drift)
+covers that half: it diffs the committed IDL JSON against the program's
+on-chain IDL account, with per-entry detail and a `fail-on-missing` flag for
+programs that never published an IDL account at all.
+
+The two Actions are designed to compose. Run both in CI to catch drift in
+both directions:
+
+```yaml
+steps:
+  - uses: auroraxo/declare-id-drift@v1
+    with:
+      program: my_program
+      cluster: mainnet
+  - uses: auroraxo/idl-drift@v1
+    with:
+      program: $(grep -m1 mainnet Anchor.toml | cut -d'"' -f2)
+      idl: target/idl/my_program.json
+      fail-on-missing: false
+```
+
+`declare-id-drift` stays purely file-based so it can run in any CI with no
+credentials. Use the companion only when an RPC endpoint is available.
 
 ## Usage
 
@@ -70,3 +90,8 @@ Exits non-zero on the first fixture that disagrees; prints the per-leg table.
 ## License
 
 MIT.
+
+## Related
+
+- [`auroraxo/idl-drift`](https://github.com/auroraxo/idl-drift) — chain-side
+  companion. Diffs the committed IDL against the on-chain IDL account.

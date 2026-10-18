@@ -14,7 +14,7 @@ jobs:
         with:
           node-version: 20
       - name: Run fixture tests
-        run: node test/run.mjs
+        run: node test/run.mjs && node test/run-hyphen.mjs
 
   dogfood:
     runs-on: ubuntu-latest

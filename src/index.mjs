@@ -18,9 +18,15 @@ import process from 'node:process';
 // --- input -----------------------------------------------------------------
 
 function getInput(name, fallback) {
-  // GitHub Actions passes inputs via INPUT_<UPPER> in process.env.
-  const key = `INPUT_${name.toUpperCase().replace(/-/g, '_')}`;
-  return process.env[key] ?? fallback;
+  // GitHub Actions exposes inputs as INPUT_<UPPERNAME> env vars. Depending on
+  // runner version, hyphens in input names may surface as underscores or stay
+  // as hyphens — check both.
+  const upper = name.toUpperCase();
+  const v =
+    process.env[`INPUT_${upper.replace(/-/g, '_')}`] ??
+    process.env[`INPUT_${upper}`] ??
+    fallback;
+  return v;
 }
 
 const inputs = {

@@ -5,6 +5,10 @@ branding:
   icon: 'shield'
   color: 'blue'
 
+categories:
+  - continuous-integration
+  - utilities
+
 inputs:
   program:
     description: 'Anchor program name. Matches the [programs.<cluster>] key in Anchor.toml, the crate name in declare_id!, the IDL file stem in target/idl, and the keypair file stem in target/deploy.'

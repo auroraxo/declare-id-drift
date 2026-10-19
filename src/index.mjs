@@ -74,30 +74,32 @@ function readJson(path) {
 
 // --- leg 1: declare_id! ----------------------------------------------------
 
-function readDeclareId(libRsText) {
-  // Match `declare_id!("...")` (with optional whitespace).
-  const m = libRsText.match(/declare_id!\(\s*"([1-9A-HJ-NP-Za-km-z]{32,44})"\s*\)/);
-  if (!m) return null;
-  return m[1];
+function readDeclareIds(libRsText) {
+  // Match every `declare_id!("...")` (with optional whitespace). Programs
+  // that branch on cfg features (cfg_if!) can carry several — picking the
+  // first silently reports false drift, so leg 1 disambiguates below.
+  const re = /declare_id!\(\s*"([1-9A-HJ-NP-Za-km-z]{32,44})"\s*\)/g;
+  const values = [];
+  let m;
+  while ((m = re.exec(libRsText)) !== null) values.push(m[1]);
+  return values;
 }
 
-const leg1 = {
-  label: 'declare_id!',
-  path: paths.libRs,
-  value: null,
-  status: 'absent',
-};
-if (exists(leg1.path)) {
+// Read leg 1 plus the other corroborating legs first, so a multi-branch
+// cfg_if! lib.rs can be disambiguated instead of first-match.
+const anchorTomlText = exists(paths.anchorToml) ? readText(paths.anchorToml) : null;
+const idlJson = exists(paths.idl)
+  ? (() => { try { return readJson(paths.idl); } catch { return null; } })()
+  : null;
+
+let declareIdValues = [];
+let leg1Status = 'absent';
+if (exists(paths.libRs)) {
   try {
-    const v = readDeclareId(readText(leg1.path));
-    if (v) {
-      leg1.value = v;
-      leg1.status = 'ok';
-    } else {
-      leg1.status = 'malformed';
-    }
+    declareIdValues = readDeclareIds(readText(paths.libRs));
+    leg1Status = declareIdValues.length > 0 ? 'ok' : 'malformed';
   } catch (e) {
-    leg1.status = `error: ${e.message}`;
+    leg1Status = `error: ${e.message}`;
   }
 }
 
@@ -132,14 +134,12 @@ const leg2 = {
   value: null,
   status: 'absent',
 };
-if (exists(leg2.path)) {
+if (anchorTomlText !== null) {
   try {
-    const v = readAnchorTomlAddress(readText(leg2.path), cluster);
+    const v = readAnchorTomlAddress(anchorTomlText, cluster);
     if (v) {
       leg2.value = v;
       leg2.status = 'ok';
-    } else {
-      leg2.status = 'absent';
     }
   } catch (e) {
     leg2.status = `error: ${e.message}`;
@@ -154,19 +154,33 @@ const leg3 = {
   value: null,
   status: 'absent',
 };
-if (exists(leg3.path)) {
-  try {
-    const j = readJson(leg3.path);
-    if (typeof j.address === 'string' && j.address.length >= 32) {
-      leg3.value = j.address;
-      leg3.status = 'ok';
-    } else {
-      leg3.status = 'malformed';
-    }
-  } catch (e) {
-    leg3.status = `error: ${e.message}`;
+if (idlJson !== null) {
+  if (typeof idlJson.address === 'string' && idlJson.address.length >= 32) {
+    leg3.value = idlJson.address;
+    leg3.status = 'ok';
+  } else {
+    leg3.status = 'malformed';
   }
 }
+
+// Disambiguate multi-branch declare_id! files: a value corroborated by the
+// Anchor.toml or IDL leg wins; with no corroboration, report the leg as
+// ambiguous rather than silently choosing the first occurrence.
+const corroborators = [leg2.value, leg3.value].filter(Boolean);
+let leg1Value = null;
+if (declareIdValues.length === 1) {
+  leg1Value = declareIdValues[0];
+} else if (declareIdValues.length > 1) {
+  leg1Value = declareIdValues.find((v) => corroborators.includes(v)) ?? null;
+  if (leg1Value === null) leg1Status = 'ambiguous';
+}
+
+const leg1 = {
+  label: 'declare_id!',
+  path: paths.libRs,
+  value: leg1Value,
+  status: leg1Status,
+};
 
 // --- leg 4: keypair ---------------------------------------------------------
 
